@@ -53,8 +53,7 @@ class modeling_white:
         self.rmse_train = np.sqrt(mean_squared_error(self.y_train[self.channel], yfit))
 
         # create a folder to store csv file
-        self.folderName = '{}_degree={}'.format(self.name, self.degree)
-#         self.folderName = 'degree={}_output_modify={}'.format(self.degree, self.output_modify)
+        self.folderName = '{}'.format(self.name)
         self.savePath = os.path.join(os.getcwd(), self.folderName)
         if not os.path.exists(self.savePath):
             os.makedirs(self.savePath)
@@ -66,13 +65,16 @@ class modeling_white:
         self.H_upper_bound = np.ceil(self.x_train['Humidity'].max()) #取濕度上限
         wavelength = self.channel.split(' ')[0]
                  
-        coef_list = [self.T_lower_bound, self.T_upper_bound, self.H_lower_bound, self.H_upper_bound, self.degree, self.intercept]
+        coef_list = [self.T_lower_bound, self.T_upper_bound, self.H_lower_bound, self.H_upper_bound, self.degree, -23, 1, 0, self.intercept] # -23=ppm, 1=multiple, 0=shift 目的是為了要跟phage regression參數對齊
         for i in self.coeff:
             coef_list.append(i)
         
         df_coef = pd.DataFrame()        
         df_coef['coefficient'] = coef_list #model coefficient  
-        df_coef.T.to_csv(self.savePath + '/{}_T={}~{}_H={}~{}_{}.csv'.format(self.sensor_number, self.T_lower_bound, self.T_upper_bound, self.H_lower_bound, self.H_upper_bound, self.channel), header=False, index=False)
+        coefAmount = len(self.coeff)
+        coef = ['coef'] * coefAmount        
+        header = ['T low', 'T high', 'H low', 'H high', 'degree', 'ppm', 'multiple', 'shift', 'intercept'] + coef
+        df_coef.T.to_csv(self.savePath + '/{}(T={}~{})(H={}~{})(degree={})({}).csv'.format(self.sensor_number, self.T_lower_bound, self.T_upper_bound, self.H_lower_bound, self.H_upper_bound, self.degree, self.channel), header=header, index=False)
 
         
 #         # (Old format vertical)create a csv to save coefficient and white card std value for each channel          
