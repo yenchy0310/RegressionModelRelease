@@ -1,11 +1,18 @@
 
 # import iplot package
 import plotly.graph_objs as go
+import plotly.express as px
 import plotly.offline as offline
 from plotly.offline import init_notebook_mode
 import cufflinks as cf
 cf.go_offline(connected=True)
-# init_notebook_mode(connected=True)
+init_notebook_mode(connected=True)
+
+# import plotly.graph_objs as go
+# import plotly.offline as offline
+# from plotly.offline import init_notebook_mode
+# import cufflinks as cf
+# cf.go_offline(connected=True)
 
 
 def plot_4D(training_data, testing_data, channel_list, sensor_number):

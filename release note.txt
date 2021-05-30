@@ -1,4 +1,13 @@
 ## 更新內容
+2021.2.2 Regression_model_release_v0.3.0
+
+* new version compensation
+* upgrade plotly version v4.14.3 (原本 version v3.9.0)
+* upgrade cufflinks version v0.17.3 (原本 version v0.15.0)
+* white_card_coef 乘 parameter(for compensation)
+* revise .csv filename
+
+---------------------------------------------------------
 >2021.1.15 Regression_model_release_v0.2.6
 * 更新interpolation模組
         * 增加線性外插高濃度值功能"__extrapolation_upper"
