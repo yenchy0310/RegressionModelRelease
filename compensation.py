@@ -21,7 +21,24 @@ def compensation_online_test(data, coef, phage_side, white_card_side):
         # white card_mv compensation       
         data['{} #{}_mv_comp'.format(channel, white_card_side)] = data['{} #{}_mv'.format(channel, white_card_side)]* (coef['{} #{}_mv'.format(channel, white_card_side)][1][0]/data['{} #{}_mv'.format(channel, white_card_side)])
         
+def compensation_670nm_white_card_model(data, phage_side, white_card_side):
     
+    '''only for 670nm compensation
+    phage_side: int 1 or 2 (AMS1:1, AMS2:2)
+    white_card_side: int 1 or 2 (AMS1:1, AMS2:2)'''     
+   
+   
+    # phage compensation
+    data['670nm #{}_comp'.format(phage_side)] = data['670nm #{}'.format(phage_side)]* (data['white card std']/data['670nm #{}'.format(white_card_side)])
+
+    # white card compensation
+    data['670nm #{}_comp'.format(white_card_side)] = data['670nm #{}'.format(white_card_side)]* (data['white card std']/data['670nm #{}'.format(white_card_side)])
+
+    # phage_mv compensation
+    data['670nm #{}_mv_comp'.format(phage_side)] = data['670nm #{}_mv'.format(phage_side)]* (data['white card std']/data['670nm #{}_mv'.format(white_card_side)])
+
+    # white card_mv compensation       
+    data['670nm #{}_mv_comp'.format(white_card_side)] = data['670nm #{}_mv'.format(white_card_side)]* (data['white card std']/data['670nm #{}_mv'.format(white_card_side)])    
     
 def compensation_AS7341(data, white_card_std, phage_side, white_card_side):
     

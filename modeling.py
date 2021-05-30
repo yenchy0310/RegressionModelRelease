@@ -19,11 +19,11 @@ init_notebook_mode(connected=True)
 class modeling:
     '''channel: analysis channel (ex: 440nm #1_mv_comp)
        x_train: training data for model building
-       y_train: ppm for model building
+       y_train: signal of ppm
        x_test: testing data for model evaluation
-       y_test: ppm for model        
+       y_test: signal of ppm       
        '''
-    def __init__(self, name, sensor_number, channel, x_train, y_train, x_test, y_test, model_name, degree, step, white_card_std, white_card_std_multiple=1, output_modify=1, shift=0, white_card_side=1, multiple=1):
+    def __init__(self, name, sensor_number, channel, x_train, y_train, x_test, y_test, model_name, degree, step, white_card_std, ppm, white_card_std_multiple=1, output_modify=1, shift=0, white_card_side=1, multiple=1):
         self.name = name
         self.sensor_number = sensor_number
         self.channel = channel
@@ -41,13 +41,13 @@ class modeling:
         self.white_card_std_multiple = white_card_std_multiple
         self.shift = shift
         self.multiple = multiple
-        
+        self.ppm = ppm
         
         
     def regression(self):
         
-        x = self.x_train[['Temperature','Humidity', self.channel]]
-        X_ = self.x_test[['Temperature','Humidity', self.channel]]
+        x = self.x_train
+        X_ = self.x_test
       
         x = self.poly.fit_transform(x)
         X_ = self.poly.fit_transform(X_)
@@ -58,43 +58,44 @@ class modeling:
         self.coeff = model.coef_
         self.intercept = model.intercept_
         self.rmse_train = np.sqrt(mean_squared_error(self.y_train, yfit))
-        
+
         # create a folder to store csv file
         self.folderName = '{}_degree={}'.format(self.name, self.degree)
+#         self.folderName = 'degree={}_output_modify={}'.format(self.degree, self.output_modify)
         self.savePath = os.path.join(os.getcwd(), self.folderName)
         if not os.path.exists(self.savePath):
             os.makedirs(self.savePath)
 
 #         (New format)create a csv to save coefficient and white card std value for each channel    
-#         self.T_lower_bound = np.floor(self.x_train['Temperature'].min()) #取溫度下限
-#         self.T_upper_bound = np.ceil(self.x_train['Temperature'].max()) #取溫度上限
-#         self.H_lower_bound = np.floor(self.x_train['Humidity'].min()) #取濕度下限
-#         self.H_upper_bound = np.ceil(self.x_train['Humidity'].max()) #取濕度上限
-#         wavelength = self.channel.split(' ')[0]
-#         white_card_std = self.white_card_std['{} #{}'.format(wavelength, self.white_card_side)][0]*self.white_card_std_multiple #白片STD值
-        
-#         coef_list = [self.T_lower_bound, self.T_upper_bound, self.H_lower_bound, self.H_upper_bound, self.degree, white_card_std, self.intercept]
-#         for i in self.coeff:
-#             coef_list.append(i)
-        
-#         df_coef = pd.DataFrame()        
-#         df_coef['coefficient'] = coef_list #model coefficient  
-#         df_coef.T.to_csv(self.savePath + '/{}_T={}~{}_H={}~{}_degree={}_{}_shift{}_ppmx{}.csv'.format(self.sensor_number, self.T_lower_bound, self.T_upper_bound, self.H_lower_bound, self.H_upper_bound,  self.degree, self.channel, self.shift, self.multiple), header=False, index=False)
-
-        
-        # (Old format vertical)create a csv to save coefficient and white card std value for each channel  
         self.T_lower_bound = np.floor(self.x_train['Temperature'].min()) #取溫度下限
         self.T_upper_bound = np.ceil(self.x_train['Temperature'].max()) #取溫度上限
         self.H_lower_bound = np.floor(self.x_train['Humidity'].min()) #取濕度下限
         self.H_upper_bound = np.ceil(self.x_train['Humidity'].max()) #取濕度上限
         wavelength = self.channel.split(' ')[0]
+        white_card_std = self.white_card_std['{} #{}'.format(wavelength, self.white_card_side)][0]*self.white_card_std_multiple #白片STD值
+        
+        coef_list = [self.T_lower_bound, self.T_upper_bound, self.H_lower_bound, self.H_upper_bound, self.degree, white_card_std, self.intercept, 1, 0] # 此1,0是用在FW tool調整倍數與上下平移，預設倍數1、平移0
+        for i in self.coeff:
+            coef_list.append(i)
+        
+        df_coef = pd.DataFrame()        
+        df_coef['coefficient'] = coef_list #model coefficient  
+        df_coef.T.to_csv(self.savePath + '/{}_T={}~{}_H={}~{}_{}_degree={}_{}_shift{}_ppmx{}.csv'.format(self.sensor_number, self.T_lower_bound, self.T_upper_bound, self.H_lower_bound, self.H_upper_bound, self.ppm, self.degree, self.channel, self.shift, self.multiple), header=False, index=False)
+
+        
+#         # (Old format vertical)create a csv to save coefficient and white card std value for each channel  
+#         self.T_lower_bound = np.floor(self.x_train['Temperature'].min()) #取溫度下限
+#         self.T_upper_bound = np.ceil(self.x_train['Temperature'].max()) #取溫度上限
+#         self.H_lower_bound = np.floor(self.x_train['Humidity'].min()) #取濕度下限
+#         self.H_upper_bound = np.ceil(self.x_train['Humidity'].max()) #取濕度上限
+#         wavelength = self.channel.split(' ')[0]
         
         
-        df_coef = pd.DataFrame()
-        df_coef['coefficient'] = np.insert(self.coeff, 0, self.intercept)
-        wavelength = self.channel.split(' ')[0]
-        df_coef['white_card_std'] = self.white_card_std['{} #{}'.format(wavelength, self.white_card_side)][0]
-        df_coef.to_csv(self.savePath + '/{}_T={}~{}_H={}~{}_degree={}_{}_shift{}_ppmx{}.csv'.format(self.sensor_number, self.T_lower_bound, self.T_upper_bound, self.H_lower_bound, self.H_upper_bound,  self.degree, self.channel, self.shift, self.multiple), header=False, index=False)
+#         df_coef = pd.DataFrame()
+#         df_coef['coefficient'] = np.insert(self.coeff, 0, self.intercept)
+#         wavelength = self.channel.split(' ')[0]
+#         df_coef['white_card_std'] = self.white_card_std['{} #{}'.format(wavelength, self.white_card_side)][0]
+#         df_coef.to_csv(self.savePath + '/{}_T={}~{}_H={}~{}_degree={}_{}_shift{}_ppmx{}.csv'.format(self.sensor_number, self.T_lower_bound, self.T_upper_bound, self.H_lower_bound, self.H_upper_bound,  self.degree, self.channel, self.shift, self.multiple), header=False, index=False)
 
         # testing set
         self.y_pred = model.predict(X_) * self.output_modify
@@ -112,7 +113,12 @@ class modeling:
         
         self.rmse_test_scale = np.sqrt(mean_squared_error(self.y_test, self.y_pred_scale))  
 
-        return self.y_pred, self.rmse_test 
+        # create a csv to save y_pred data
+#         df_pred = pd.DataFrame()
+#         df_pred['y_pred']=self.y_pred
+#         df_pred.to_csv(self.savePath + '/{}_y_pred_degree={}_{}.csv'.format(self.sensor_number, self.degree, self.channel), header=True, index=False)  
+
+        return self.intercept, self.coeff, self.T_lower_bound, self.T_upper_bound, self.H_lower_bound, self.H_upper_bound   
 
 
     def y_pred_scale_buffer(self, buffer):
@@ -164,20 +170,22 @@ class modeling:
         
     def coef(self):
         print(self.poly.get_feature_names())
-        print('Coefficient=', self.coeff)
-        print('Intercept=', self.intercept)
+#         print('Coefficient=', self.coeff)
+#         print('Intercept=', self.intercept)
+        coefficient = np.insert(self.coeff, 0, self.intercept)
+        print('({}~{})({}~{})'.format(self.T_lower_bound, self.T_upper_bound, self.H_lower_bound, self.H_upper_bound),coefficient)
         return self.intercept, self.coeff
                 
         
     def plot(self):  
-        filename = 'T={}~{}_H={}~{}_degree={}_{}_shift{}_ppmx{} (RMSE y_pred_scale= {:.2f})'.format(self.T_lower_bound, self.T_upper_bound, self.H_lower_bound, self.H_upper_bound,  self.degree, self.channel, self.shift, self.multiple, self.rmse_test ) 
+        filename = '{} (T={}~{}) (H={}~{}) (degree={}) ({}) (shift{}_ppmx{}) (RMSE y_pred_scale= {:.2f})'.format(self.ppm, self.T_lower_bound, self.T_upper_bound, self.H_lower_bound, self.H_upper_bound,  self.degree, self.channel, self.shift, self.multiple, self.rmse_test ) 
         df_result = pd.DataFrame()
         df_result['y_true'] = self.y_test
         df_result['y_pred'] = self.y_pred
         df_result['y_pred_scale'] = self.y_pred_scale
         df_result['y_pred_scale_buffer'] = self.y_buffer
         df_result['Humidity'] = self.x_test['Humidity']
-        df_result.iplot(y=['y_true', 'y_pred', 'y_pred_scale', 'y_pred_scale_buffer'], 
+        df_result.iplot(y=['y_true', 'y_pred'], 
                         kind='scatter', 
                         yTitle='ppm', 
                         title=filename)
@@ -191,7 +199,7 @@ class modeling:
         plt.grid(alpha=0.3)
         plt.legend(bbox_to_anchor=(0., 1.02, 1., .102),  loc=3, ncol=3, mode="expand")
         plt.title(filename, y=1.15, fontsize=10)
-        plt.savefig(self.savePath + '/{}_'.format(self.sensor_number) + filename + '.png', dpi=200, bbox_inches='tight')
+        plt.savefig(self.savePath + '/' + filename + '.png', dpi=200, bbox_inches='tight')
         plt.close() 
         # plt.show()
         
