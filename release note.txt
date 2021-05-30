@@ -1,4 +1,6 @@
-1. add interpolation module
+1. add humidity_feature option
+2. modify degree=1 bug
+3. add FFT module
 
 
 

@@ -16,14 +16,14 @@ import cufflinks as cf
 cf.go_offline(connected=True)
 init_notebook_mode(connected=True)
 
-class modeling:
+class model:
     '''channel: analysis channel (ex: 440nm #1_mv_comp)
        x_train: training data for model building
        y_train: signal of ppm
        x_test: testing data for model evaluation
        y_test: signal of ppm       
        '''
-    def __init__(self, name, sensor_number, channel, x_train, y_train, x_test, y_test, model_name, degree, step, ppm, white_card_std_multiple=1, output_modify=1, shift=0, white_card_side=1, multiple=1):
+    def __init__(self, name, sensor_number, channel, x_train, y_train, x_test, y_test, model_name, degree, step, ppm, output_modify=1, shift=0, multiple=1, humidity_feature=True):
         self.name = name
         self.sensor_number = sensor_number
         self.channel = channel
@@ -36,16 +36,15 @@ class modeling:
         self.poly = PolynomialFeatures(degree=self.degree, include_bias=False)
         self.step = step
         self.output_modify = output_modify
-        self.white_card_side = white_card_side
-        self.white_card_std_multiple = white_card_std_multiple
         self.shift = shift
         self.multiple = multiple
         self.ppm = ppm
+        self.humidity_feature = humidity_feature
         
         
-    def regression(self, humidity_feature=True):
+    def regression(self):
         
-        if humidity_feature == True:
+        if self.humidity_feature == True:
             x = self.x_train
             X_ = self.x_test
         else:
@@ -66,6 +65,11 @@ class modeling:
         self.y_pred = model.predict(X_) * self.output_modify
         self.rmse_test = np.sqrt(mean_squared_error(self.y_test, self.y_pred))
 
+        return self.intercept, self.coeff
+
+    
+    def save_sensor_side_coef(self):
+
         # create a folder to store csv file
         self.folderName = '{}'.format(self.name)
         self.savePath = os.path.join(os.getcwd(), self.folderName)
@@ -79,14 +83,14 @@ class modeling:
         self.H_upper_bound = np.ceil(self.x_train['Humidity'].max()) #取濕度上限
         # wavelength = self.channel.split(' ')[0]
         
-        if (humidity_feature == False)&(self.degree==1):
-            self.coeff = self.coeff + [0]
+        if (self.humidity_feature == False)&(self.degree==1):
+            self.coeff = np.append(self.coeff, [0] * self.degree)
 
-        elif (humidity_feature == False)&(self.degree==2):
+        elif (self.humidity_feature == False)&(self.degree==2):
             self.coeff = np.insert(self.coeff, 1, 0)
             self.coeff = np.append(self.coeff, [0] * self.degree)
 
-        elif (humidity_feature == False)&(self.degree==3):
+        elif (self.humidity_feature == False)&(self.degree==3):
             self.coeff = np.insert(self.coeff, 1, 0)
             self.coeff = np.insert(self.coeff, 3, 0)
             self.coeff = np.insert(self.coeff, 4, 0)
@@ -101,11 +105,39 @@ class modeling:
         coefAmount = len(self.coeff)
         coef = ['coef'] * coefAmount        
         header = ['T low', 'T high', 'H low', 'H high', 'degree', 'ppm', 'multiple', 'shift', 'intercept'] + coef
-        df_coef.T.to_csv(self.savePath + '/{}(T={}~{})(H={}~{})({})(degree={})({})(shift{}_ppmx{}).csv'.format(self.sensor_number, self.T_lower_bound, self.T_upper_bound, self.H_lower_bound, self.H_upper_bound, self.ppm, self.degree, self.channel, self.shift, self.multiple), header=header, index=False)        
+        df_coef.T.to_csv(self.savePath + '\{}(T={}~{})(H={}~{})({})(degree={})({})(shift{})(multiple{}).csv'.format(self.sensor_number, self.T_lower_bound, self.T_upper_bound, self.H_lower_bound, self.H_upper_bound, self.ppm, self.degree, self.channel, self.shift, self.multiple), header=header, index=False)        
+              
+        return self.T_lower_bound, self.T_upper_bound, self.H_lower_bound, self.H_upper_bound 
 
-        return self.intercept, self.coeff, self.T_lower_bound, self.T_upper_bound, self.H_lower_bound, self.H_upper_bound   
-                      
-    
+
+    def save_white_card_side_coef(self):
+
+        # create a folder to store csv file
+        self.folderName = '{}'.format(self.name)
+        self.savePath = os.path.join(os.getcwd(), self.folderName)
+        if not os.path.exists(self.savePath):
+            os.makedirs(self.savePath)
+
+#         (New format)create a csv to save coefficient and white card std value for each channel    
+        self.T_lower_bound = np.floor(self.x_train['Temperature'].min()) #取溫度下限
+        self.T_upper_bound = np.ceil(self.x_train['Temperature'].max()) #取溫度上限
+        self.H_lower_bound = np.floor(self.x_train['Humidity'].min()) #取濕度下限
+        self.H_upper_bound = np.ceil(self.x_train['Humidity'].max()) #取濕度上限
+        # wavelength = self.channel.split(' ')[0]
+                 
+        coef_list = [self.T_lower_bound, self.T_upper_bound, self.H_lower_bound, self.H_upper_bound, self.degree, -23, 1, 0, self.intercept] # -23=ppm, 1=multiple, 0=shift 目的是為了要跟phage regression參數對齊
+        for i in self.coeff:
+            coef_list.append(i)
+        
+        df_coef = pd.DataFrame()        
+        df_coef['coefficient'] = coef_list #model coefficient  
+        coefAmount = len(self.coeff)
+        coef = ['coef'] * coefAmount        
+        header = ['T low', 'T high', 'H low', 'H high', 'degree', 'ppm', 'multiple', 'shift', 'intercept'] + coef
+        df_coef.T.to_csv(self.savePath + '\{}(T={}~{})(H={}~{})(degree={})({}).csv'.format(self.sensor_number, self.T_lower_bound, self.T_upper_bound, self.H_lower_bound, self.H_upper_bound, self.degree, self.channel), header=header, index=False)
+
+        
+
     def loss(self):
         print('RMSE_train= {:.2f}'.format(self.rmse_train))
         print('RMSE_test= {:.2f}'.format(self.rmse_test))
