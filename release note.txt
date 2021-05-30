@@ -1,0 +1,3 @@
+Regression_model_release_v0.0.7(AMS2 phage)
+4D plot for each model
+Individual white_card_std
