@@ -1,6 +1,12 @@
-* fix exponential interpolation Nan issue
-* mark "testing set" of model.model
-* mark "def loss" of model.model
+## 更新內容
+>2021.1.15 Regression_model_release_v0.2.6
+* 更新interpolation模組
+        * 增加線性外插高濃度值功能"__extrapolation_upper"
+        * 增加線性外插低濃度值功能"__extrapolation_lower"
+        * 增加指數外插高濃度值功能"__log_extrapolation_upper"
+        * 增加指數外插低濃度值功能"__log_extrapolation_lower"
+        * 修正對數數值domain
+        * mark hybrid_interpolation function
 
 
 
