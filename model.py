@@ -29,8 +29,8 @@ class model:
         self.channel = channel
         self.x_train = x_train
         self.y_train = y_train
-        self.x_test = x_test
-        self.y_test = y_test
+#         self.x_test = x_test
+#         self.y_test = y_test
         self.model_name = model_name
         self.degree = degree
         self.poly = PolynomialFeatures(degree=self.degree, include_bias=False)
@@ -46,13 +46,13 @@ class model:
         
         if self.humidity_feature == True:
             x = self.x_train
-            X_ = self.x_test
+#             X_ = self.x_test
         else:
             x = self.x_train[['Temperature']]
-            X_ = self.x_test[['Temperature']]
+#             X_ = self.x_test[['Temperature']]
       
         x = self.poly.fit_transform(x)
-        X_ = self.poly.fit_transform(X_)
+#         X_ = self.poly.fit_transform(X_)
 
         # training set 
         model = self.model_name.fit(x, self.y_train)
@@ -62,8 +62,8 @@ class model:
         self.rmse_train = np.sqrt(mean_squared_error(self.y_train, yfit))
         
         # testing set
-        self.y_pred = model.predict(X_) * self.output_modify
-        self.rmse_test = np.sqrt(mean_squared_error(self.y_test, self.y_pred))
+#         self.y_pred = model.predict(X_) * self.output_modify
+#         self.rmse_test = np.sqrt(mean_squared_error(self.y_test, self.y_pred))
 
         return self.intercept, self.coeff
 
@@ -138,9 +138,9 @@ class model:
 
         
 
-    def loss(self):
-        print('RMSE_train= {:.2f}'.format(self.rmse_train))
-        print('RMSE_test= {:.2f}'.format(self.rmse_test))
+#     def loss(self):
+#         print('RMSE_train= {:.2f}'.format(self.rmse_train))
+#         print('RMSE_test= {:.2f}'.format(self.rmse_test))
         # print('RMSE_test_scale= {:.2f}'.format(self.rmse_test_scale))
 
         

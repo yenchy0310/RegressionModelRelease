@@ -1,7 +1,6 @@
-* fix interpolation module
-* add exponential interpolation
-* add hybrid interpolation
-
+* fix exponential interpolation Nan issue
+* mark "testing set" of model.model
+* mark "def loss" of model.model
 
 
 

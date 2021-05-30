@@ -167,6 +167,9 @@ def exponential_interpolation(signal_ppm_dict, signal, ppm_low, ppm_up):
             up = ppm_up
             ppm = __exponential_extrapolation(signal_ppm_dict, signal, low, up)
             return ppm
+        
+        else:
+            return 0
     
     
 def hybrid_interpolation(signal_ppm_dict, signal, ppm_low, ppm_mid, ppm_up):
