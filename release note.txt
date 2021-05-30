@@ -1,4 +1,6 @@
-修改演算法濃度範圍 0, 30, 60ppm
+* fix interpolation module
+* add exponential interpolation
+* add hybrid interpolation
 
 
 

@@ -1,3 +1,4 @@
+import math
 import numpy as np
 
 # def calculate_ppm_surface_signal(coef, x0, degree): 
@@ -25,9 +26,9 @@ import numpy as np
 
 def calculate_ppm_surface_signal(coef, x0, x1, degree): 
     '''Caculate the signal of each data pair of temperature and humidity  
-        coef=list 
-        x0=float (temperature)
-        x1=float (humidity)
+        coef : list 
+        x0 : float (temperature)
+        x1 : float (humidity)
         return float'''
     
     if degree == 1 :
@@ -46,42 +47,188 @@ def calculate_ppm_surface_signal(coef, x0, x1, degree):
 
     return signal
 
-def interpolation(signal, signal_0ppm, signal_30ppm, signal_60ppm):
+
+def __interpolation(signal_ppm_dict, signal, low, up):    
+    ppm = (up-low) / (signal_ppm_dict[up]-signal_ppm_dict[low]) * (signal-signal_ppm_dict[low]) + low
+    return ppm
+    
+def __extrapolation(signal_ppm_dict, signal, low, up):    
+    ppm = (up-low) / (signal_ppm_dict[up]-signal_ppm_dict[low]) * (signal-signal_ppm_dict[up]) + up
+    return ppm
+
+def __exponential_interpolation(signal_ppm_dict, signal, low, up):
+    log_ppm = math.log(up-low) / (signal_ppm_dict[up]-signal_ppm_dict[low]) * (signal-signal_ppm_dict[low]) + math.log((low+1))
+    ppm = math.exp(log_ppm)
+    return ppm
+
+def __exponential_extrapolation(signal_ppm_dict, signal, low, up):    
+    log_ppm = math.log(up-low) / (signal_ppm_dict[up]-signal_ppm_dict[low]) * (signal-signal_ppm_dict[up]) + math.log(up)
+    ppm = math.exp(log_ppm)
+    return ppm
+    
+def linear_interpolation(signal_ppm_dict, signal, ppm_low, ppm_mid, ppm_up):
     '''predict ppm by interpolation algorithm
-       signal=int (real-time signal)'''
+       signal_ppm_dict : dictionary
+       signal : int, sensor raw data
+       ppm_low : int
+       ppm_mid : int
+       ppm_up : int'''
+        
+    if (signal_ppm_dict[ppm_up] > signal_ppm_dict[ppm_low]):    
     
-    if (signal_0ppm < signal_60ppm): # positive response
+        # linear interpolation
+        if (signal > signal_ppm_dict[ppm_low]) & (signal <= signal_ppm_dict[ppm_mid]):
+            low = ppm_low
+            up = ppm_mid
+            ppm = __interpolation(signal_ppm_dict, signal, low, up)
+            return ppm   
+        
+        # linear interpolation
+        elif (signal > signal_ppm_dict[ppm_mid]) & (signal <=signal_ppm_dict[ppm_up]):
+            low = ppm_mid
+            up = ppm_up            
+            ppm = __interpolation(signal_ppm_dict, signal, low, up)
+            return ppm
+        
+        # linear extrapolation
+        elif (signal > signal_ppm_dict[ppm_up]):
+            low = ppm_mid
+            up = ppm_up 
+            ppm = __extrapolation(signal_ppm_dict, signal, low, up)
+            return ppm
+        
+        else:
+            return 0
+        
+    else:
+        
+        # linear interpolation
+        if (signal < signal_ppm_dict[ppm_low]) & (signal >= signal_ppm_dict[ppm_mid]):
+            low = ppm_low
+            up = ppm_mid
+            ppm = __interpolation(signal_ppm_dict, signal, low, up)
+            return ppm   
+        
+        # linear interpolation
+        elif (signal < signal_ppm_dict[ppm_mid]) & (signal >=signal_ppm_dict[ppm_up]):
+            low = ppm_mid
+            up = ppm_up            
+            ppm = __interpolation(signal_ppm_dict, signal, low, up)
+            return ppm
+        
+        # linear extrapolation
+        elif (signal < signal_ppm_dict[ppm_up]):
+            low = ppm_mid
+            up = ppm_up 
+            ppm = __extrapolation(signal_ppm_dict, signal, low, up)
+            return ppm
+        
+        else:
+            return 0
+        
+def exponential_interpolation(signal_ppm_dict, signal, ppm_low, ppm_up):
+    '''predict ppm by interpolation algorithm
+       signal_ppm_dict : dictionary
+       signal : int, sensor raw data
+       ppm_low : int
+       ppm_up : int'''
     
-        if (signal>signal_0ppm)&(signal<signal_30ppm):
-            ppm = abs(30-0)/abs(signal_30ppm-signal_0ppm)*abs((signal)-signal_0ppm) #interpolation
+    if (signal_ppm_dict[ppm_up] > signal_ppm_dict[ppm_low]):    
+        
+        # exponential interpolation
+        if (signal > signal_ppm_dict[ppm_low]) & (signal <= signal_ppm_dict[ppm_up]):
+            low = ppm_low
+            up = ppm_up
+            ppm = __exponential_interpolation(signal_ppm_dict, signal, low, up) 
             return ppm
-
-        elif (signal>signal_30ppm)&(signal<signal_60ppm):
-            ppm = abs(60-30)/abs(signal_60ppm-signal_30ppm)*abs((signal)-signal_30ppm)+30 #interpolation
-            return ppm
-
-        elif (signal > signal_60ppm):
-            ppm = abs(60-30)/abs(signal_60ppm-signal_30ppm)*abs((signal)-signal_60ppm)+60
+        
+        # exponential extrapolation
+        elif (signal > signal_ppm_dict[ppm_up]):
+            low = ppm_low
+            up = ppm_up
+            ppm = __exponential_extrapolation(signal_ppm_dict, signal, low, up)
             return ppm
 
         else:
-            ppm = (-30)/(signal_0ppm-signal_30ppm)*((signal)-signal_0ppm)
+            return 0
+        
+    else:
+        
+        # exponential interpolation
+        if (signal < signal_ppm_dict[ppm_low]) & (signal >= signal_ppm_dict[ppm_up]):
+            low = ppm_low
+            up = ppm_up
+            ppm = __exponential_interpolation(signal_ppm_dict, signal, low, up) 
             return ppm
         
-    else: # negative response
+        # exponential extrapolation
+        elif (signal < signal_ppm_dict[ppm_up]):
+            low = ppm_low
+            up = ppm_up
+            ppm = __exponential_extrapolation(signal_ppm_dict, signal, low, up)
+            return ppm
+    
+    
+def hybrid_interpolation(signal_ppm_dict, signal, ppm_low, ppm_mid, ppm_up):
+    
+    '''predict ppm by interpolation algorithm
+       signal_ppm_dict : dictionary
+       signal : int, sensor raw data
+       ppm_low : int
+       ppm_up : int'''
+    
+    if (signal_ppm_dict[ppm_up] > signal_ppm_dict[ppm_low]):    
+    
+        #linear interpolatio
+        if (signal > signal_ppm_dict[ppm_low]) & (signal <= signal_ppm_dict[ppm_mid]):
+            low = ppm_low
+            up = ppm_mid
+            ppm = __interpolation(signal_ppm_dict, signal, low, up)
+            return ppm
         
-        if (signal<signal_0ppm)&(signal>signal_30ppm):
-            ppm = abs(30-0)/abs(signal_30ppm-signal_0ppm)*abs((signal)-signal_0ppm) #interpolation
+        #exponential interpolation
+        elif (signal > signal_ppm_dict[ppm_mid]) & (signal <= signal_ppm_dict[ppm_up]):
+            low = ppm_low
+            up = ppm_up
+            ppm = __exponential_interpolation(signal_ppm_dict, signal, low, up)  
             return ppm
-
-        elif (signal<signal_30ppm)&(signal>signal_60ppm):
-            ppm = abs(60-30)/abs(signal_60ppm-signal_30ppm)*abs((signal)-signal_30ppm)+30 #interpolation
-            return ppm
-
-        elif (signal < signal_60ppm):
-            ppm = abs(60-30)/abs(signal_60ppm-signal_30ppm)*abs((signal)-signal_60ppm)+60
+        
+        #exponential extrapolation
+        elif (signal > signal_ppm_dict[ppm_up]):
+            low = ppm_low
+            up = ppm_up
+            ppm = __exponential_extrapolation(signal_ppm_dict, signal, low, up) 
             return ppm
 
         else:
-            ppm = (-30)/(signal_0ppm-signal_30ppm)*((signal)-signal_0ppm)
+            return 0
+        
+    else:
+        
+        #linear interpolatio
+        if (signal < signal_ppm_dict[ppm_low]) & (signal >= signal_ppm_dict[ppm_mid]):
+            low = ppm_low
+            up = ppm_mid
+            ppm = __interpolation(signal_ppm_dict, signal, low, up)
             return ppm
+        
+        #exponential interpolation
+        elif (signal < signal_ppm_dict[ppm_mid]) & (signal >= signal_ppm_dict[ppm_up]):
+            low = ppm_low
+            up = ppm_up
+            ppm = __exponential_interpolation(signal_ppm_dict, signal, low, up)  
+            return ppm
+        
+        #exponential extrapolation
+        elif (signal < signal_ppm_dict[ppm_up]):
+            low = ppm_low
+            up = ppm_up
+            ppm = __exponential_extrapolation(signal_ppm_dict, signal, low, up) 
+            return ppm
+
+        else:
+            return 0
+        
+     
+        
+
