@@ -1,7 +1,4 @@
-1. 修正compensation_AS7341只對對應Channel進行compensation
-2. 增加white_card_model支援 degree=2
-
-1. csv 增加header
+1. add interpolation module
 
 
 
