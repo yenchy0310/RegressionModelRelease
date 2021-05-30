@@ -46,42 +46,42 @@ def calculate_ppm_surface_signal(coef, x0, x1, degree):
 
     return signal
 
-def interpolation(signal, signal_0ppm, signal_10ppm, signal_60ppm):
+def interpolation(signal, signal_0ppm, signal_30ppm, signal_60ppm):
     '''predict ppm by interpolation algorithm
        signal=int (real-time signal)'''
     
     if (signal_0ppm < signal_60ppm): # positive response
     
-        if (signal>signal_0ppm)&(signal<signal_10ppm):
-            ppm = abs(10-0)/abs(signal_10ppm-signal_0ppm)*abs((signal)-signal_0ppm) #interpolation
+        if (signal>signal_0ppm)&(signal<signal_30ppm):
+            ppm = abs(30-0)/abs(signal_30ppm-signal_0ppm)*abs((signal)-signal_0ppm) #interpolation
             return ppm
 
-        elif (signal>signal_10ppm)&(signal<signal_60ppm):
-            ppm = abs(60-10)/abs(signal_60ppm-signal_10ppm)*abs((signal)-signal_10ppm)+10 #interpolation
+        elif (signal>signal_30ppm)&(signal<signal_60ppm):
+            ppm = abs(60-30)/abs(signal_60ppm-signal_30ppm)*abs((signal)-signal_30ppm)+30 #interpolation
             return ppm
 
         elif (signal > signal_60ppm):
-            ppm = abs(60-10)/abs(signal_60ppm-signal_10ppm)*abs((signal)-signal_60ppm)+60
+            ppm = abs(60-30)/abs(signal_60ppm-signal_30ppm)*abs((signal)-signal_60ppm)+60
             return ppm
 
         else:
-            ppm = (-10)/(signal_0ppm-signal_10ppm)*((signal)-signal_0ppm)
+            ppm = (-30)/(signal_0ppm-signal_30ppm)*((signal)-signal_0ppm)
             return ppm
         
     else: # negative response
         
-        if (signal<signal_0ppm)&(signal>signal_10ppm):
-            ppm = abs(10-0)/abs(signal_10ppm-signal_0ppm)*abs((signal)-signal_0ppm) #interpolation
+        if (signal<signal_0ppm)&(signal>signal_30ppm):
+            ppm = abs(30-0)/abs(signal_30ppm-signal_0ppm)*abs((signal)-signal_0ppm) #interpolation
             return ppm
 
-        elif (signal<signal_10ppm)&(signal>signal_60ppm):
-            ppm = abs(60-10)/abs(signal_60ppm-signal_10ppm)*abs((signal)-signal_10ppm)+10 #interpolation
+        elif (signal<signal_30ppm)&(signal>signal_60ppm):
+            ppm = abs(60-30)/abs(signal_60ppm-signal_30ppm)*abs((signal)-signal_30ppm)+30 #interpolation
             return ppm
 
         elif (signal < signal_60ppm):
-            ppm = abs(60-10)/abs(signal_60ppm-signal_10ppm)*abs((signal)-signal_60ppm)+60
+            ppm = abs(60-30)/abs(signal_60ppm-signal_30ppm)*abs((signal)-signal_60ppm)+60
             return ppm
 
         else:
-            ppm = (-10)/(signal_0ppm-signal_10ppm)*((signal)-signal_0ppm)
+            ppm = (-30)/(signal_0ppm-signal_30ppm)*((signal)-signal_0ppm)
             return ppm
