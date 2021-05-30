@@ -1,6 +1,5 @@
-1. add humidity_feature option
-2. modify degree=1 bug
-3. add FFT module
+1. 修正 df_test取10ppm值產生的錯誤
+
 
 
 
